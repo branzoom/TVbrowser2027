@@ -1,0 +1,18 @@
+# 构建产物
+.gradle/
+build/
+app/build/
+*.apk
+*.aab
+发布/
+
+# 本机配置和签名（千万不要上传）
+local.properties
+keystore.properties
+*.jks
+*.keystore
+
+# 系统/IDE
+.DS_Store
+.idea/
+*.iml

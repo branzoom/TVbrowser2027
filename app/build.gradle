@@ -1,0 +1,72 @@
+plugins {
+    id 'com.android.application'
+}
+
+// 正式签名信息放在项目根目录的 keystore.properties（不要外传，也不要丢）
+def keystoreProps = new Properties()
+def keystoreFile = rootProject.file('keystore.properties')
+if (keystoreFile.exists()) keystoreFile.withInputStream { keystoreProps.load(it) }
+
+android {
+    namespace = 'com.tvbrowser.assistant'
+    compileSdk {
+        version = release(37) { minorApiLevel = 1 }
+    }
+
+    defaultConfig {
+        applicationId 'com.tvbrowser.assistant'
+        minSdk 26
+        targetSdk 34
+        versionCode 4
+        versionName '1.0.1'
+    }
+
+    signingConfigs {
+        release {
+            if (keystoreFile.exists()) {
+                storeFile file(keystoreProps['storeFile'])
+                storePassword keystoreProps['storePassword']
+                keyAlias keystoreProps['keyAlias']
+                keyPassword keystoreProps['keyPassword']
+            }
+        }
+    }
+
+    // 同时输出：通用版（32+64 位）、32 位版、64 位版
+    splits {
+        abi {
+            enable true
+            reset()
+            include 'armeabi-v7a', 'arm64-v8a'
+            universalApk true
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig keystoreFile.exists() ? signingConfigs.release : signingConfigs.debug
+        }
+    }
+
+    packaging {
+        // 压缩内核的 .so 文件，安装包能小很多
+        jniLibs {
+            useLegacyPackaging = true
+            // 电视都是 ARM 芯片，去掉 x86 的内核库，通用版能小一大半
+            excludes += ["lib/x86/**", "lib/x86_64/**"]
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    // Mozilla GeckoView（最新 Firefox 内核），通用版包含 32 位和 64 位 ARM
+    implementation 'org.mozilla.geckoview:geckoview:156.0.20260921121718'
+    // 生成首页上的二维码
+    implementation 'com.google.zxing:core:3.5.3'
+}
